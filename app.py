@@ -2,8 +2,7 @@ from sqlalchemy import create_engine, select, MetaData
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
-from db import Database, commands
-from models import metadata, table
+from database import Database
 
 
 class InputError(Exception):
@@ -20,7 +19,7 @@ def take_input():
         # if args_count == 0:
         #     raise InputError('no args')
 
-        if args_count > 0 and args[0] not in commands:
+        if args_count > 0 and args[0] not in Database.commands:
             raise InputError(f'unknown command: {args[0]}')
 
     except EOFError:
@@ -39,7 +38,8 @@ def db_loop():
     while result != 'EOF':
         console_args = take_input()
         result = db.execute(console_args)
-        print(result)
+        if result:
+            print(result)
 
     """
     db schema:

@@ -1,13 +1,22 @@
 from sqlalchemy import Table, Column, Integer, String, MetaData
-metadata = MetaData()
+from sqlalchemy.orm import declarative_base
+# metadata = MetaData()
+Base = declarative_base()
 
 
-# class Var(Model):
-#     name = Column
+class Var(Base):
+    __tablename__ = 'variable'
 
-table = Table(
-    'table', metadata,
-    Column('name', String, primary_key=True),
-    Column('value', Integer, nullable=False)
-)
+    name = Column(String, primary_key=True)
+    value = Column(Integer)
+
+    def __repr__(self):
+        return f"Var(name={self.name!r}, value={self.value!r})"
+
+
+# table = Table(
+#     'table', metadata,
+#     Column('name', String, primary_key=True),
+#     Column('value', Integer, nullable=False)
+# )
 

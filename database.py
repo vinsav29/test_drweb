@@ -1,49 +1,65 @@
-commands = {
-    'SET',      # SET A 1
-    'GET',      # GET A     -> 1
-    'UNSET',    # UNSET A
-    'COUNTS',   # COUNTS 1  -> 2
-    'FIND',     # FIND 1    -> A, B
-    'END',
-    'BEGIN',
-    'ROLLBACK',
-    'COMMIT',
-}
+from sqlalchemy import create_engine, select, MetaData
+from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.orm import Session
+from models import Var, Base
 
 
 class Database:
+    commands = dict()
+    session = None
+
     def __init__(self):
         self.engine = create_engine("sqlite+pysqlite:///:memory:", echo=True, future=True)
-        MetaData().create_all(self.engine)
+        # MetaData().create_all(self.engine)
         # self.metadata.create_all(engine)
+        Base.metadata.create_all(self.engine)
         self.session = Session(self.engine)
+
+        self.commands = {
+            'SET': self.set,  # SET A 1
+            'GET': self.get,  # GET A     -> 1
+            'UNSET': self.unset,  # UNSET A
+            'COUNTS': self.counts,  # COUNTS 1  -> 2
+            'FIND': self.find,  # FIND 1    -> A, B
+            'END': self.end,
+            'BEGIN': self.begin,
+            'ROLLBACK': self.rollback,
+            'COMMIT': self.commit,
+        }
 
         print('Create :memory: database...\nDone!\n\nPlease, input transaction:')
 
     def execute(self, cmd, *args, **kwargs):
         try:
-            result = commands[cmd](*args, **kwargs)
+            return self.commands[cmd](*args, **kwargs)
         except IndexError:
             print('Неверное количество аргументов')
         except ValueError:
             print('Ошибка ввода значения переменной')
         except EOFError:
             raise EOFError
-        else:
-            return result
+        except KeyError:
+            print('Неизвестная команда')
+        return None
 
     def set(self, *args):
-        name = args[0]
+        name = str(args[0])
         value = int(args[1])
+        print(name, value)
         if len(args) > 2:
             raise IndexError
+        # insert_stmt = insert(table).values(varname='A', value=1)
+        # update_stmt = insert_stmt.on_conflict_do_update(index_elements=['varname'], set_={'value': 1})
+        # result = self.session.execute(update_stmt)
+        result = self.session.add(Var(name=name, value=value))
+        return None
 
     def get(self, *args):
         name = args[0]
         if len(args) > 1:
             raise IndexError
 
-        result = session.get()
+        result = self.session.query(Var).filter_by(name=name).scalar()
         if result:
             return result
         else:
@@ -68,6 +84,16 @@ class Database:
             raise IndexError
         self.session.close()
         raise EOFError
+
+    def begin(self, *args):
+        pass
+
+    def rollback(self, *args):
+        pass
+
+    def commit(self, *args):
+        pass
+
 # from sqlalchemy import create_engine, text
 # engine = create_engine("sqlite+pysqlite:///:memory:", echo=True, future=True)
 #
@@ -98,5 +124,3 @@ class Database:
 #     result = session.execute(text("SELECT x, y FROM some_table"))
 #     for row in result:
 #         print(f"x: {row.x}  y: {row.y}")
-
-
